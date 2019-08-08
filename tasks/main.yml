@@ -26,19 +26,24 @@
   tags: nvm
 
 - name: Install {{ nvm.node_version }}
-  command: sudo -iu {{ nvm.user }} nvm install {{ nvm.node_version }}
+  become: yes
+  become_user: "{{ nvm.user }}"
+  shell: bash -lc "nvm install {{ nvm.node_version }}"
   register: nvm_install_result
-  changed_when: "'is already installed.' not in nvm_install_result.stdout"
+  changed_when: "'is already installed.' not in nvm_install_result.stderr"
   tags: nvm
 
 - name: Check if {{ nvm.node_version }} is the default node version
-  shell: sudo -iu {{ nvm.user }} nvm ls | grep -e 'default -> {{ nvm.node_version }}'
+  become: yes
+  become_user: "{{ nvm.user }}"
+  shell: bash -lc "nvm alias default"
   register: nvm_check_default
   changed_when: False
-  ignore_errors: True
   tags: nvm
 
 - name: Set default node version to {{ nvm.node_version }}
-  command: sudo -iu {{ nvm.user }} nvm alias default {{ nvm.node_version }}
-  when: nvm_check_default|failed
+  become: yes
+  become_user: "{{ nvm.user }}"
+  shell: bash -lc "nvm alias default {{ nvm.node_version }}"
+  when: nvm.node_version not in nvm_check_default.stdout
   tags: nvm
